@@ -3,7 +3,7 @@
 An implementation of `core.cache` that saves entries to disk.
 This implementation uses the fantastic LMDB.
 
-[![Circle CI](https://circleci.com/gh/shriphani/fort-knox.svg?style=shield&circle-token=351e60b226583e6e24fece5d35f03fbb4f50d3bc)](https://circleci.com/gh/shriphani/fort-knox)
+[![Circle CI](https://circleci.com/gh/shriphani/fort-knox.svg?style=shield&circle-token=d6290287207f1a753a288eb4363c9ce8a1d0f3d9)](https://circleci.com/gh/shriphani/fort-knox)
 
 **DISCLAIMER** typical `core.cache` implementations use persistent
 and associative data structures. Since a disk-backed key-value
