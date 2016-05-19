@@ -1,4 +1,4 @@
-(ns clj-persistent-cache.core
+(ns fort-knox.core
   (:require [clojure.core.cache :refer :all]
             [clj-lmdb.simple :refer :all]))
 
