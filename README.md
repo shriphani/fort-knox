@@ -5,6 +5,10 @@ This implementation uses the fantastic LMDB.
 
 [![Circle CI](https://circleci.com/gh/shriphani/fort-knox.svg?style=shield&circle-token=d6290287207f1a753a288eb4363c9ce8a1d0f3d9)](https://circleci.com/gh/shriphani/fort-knox)
 
+
+[![Clojars Project](https://img.shields.io/clojars/v/fort-knox.svg)](https://clojars.org/fort-knox)
+
+
 **DISCLAIMER** typical `core.cache` implementations use persistent
 and associative data structures. Since a disk-backed key-value
 store doesn't have any such concept, this implementation might
