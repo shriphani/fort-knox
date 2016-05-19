@@ -1,40 +1,67 @@
 (ns fort-knox.core
   (:require [clojure.core.cache :refer :all]
-            [clj-lmdb.simple :refer :all]))
+            [clj-lmdb.simple :refer :all]
+            [me.raynes.fs :as fs]))
 
-(defcache PersistentCache
+(defcache LMDBCache
   [cache]
   CacheProtocol
   (lookup
    [_ item]
-   (get! cache item))
+   (with-txn [rtxn (read-txn cache)]
+     (get! cache
+           rtxn
+           (name item))))
 
   (lookup
    [_ item not-found]
-   (or (get! cache item)
-       not-found))
+   (with-txn [rtxn (read-txn cache)]
+     (or (get! cache
+               rtxn
+               (name item))
+         not-found)))
 
   (has?
    [_ item]
-   (-> item
-       (get! cache)
-       nil?
-       not))
+   (with-txn [rtxn (read-txn cache)]
+     (-> (get! cache
+               rtxn
+               (name item))
+         nil?
+         not)))
 
   (hit
    [cache item]
    cache)
 
   (miss
-   [cache item result]
-   (put! cache item result)
-   (PersistentCache. cache))
-
+   [_ item result]
+   (with-txn [wtxn (write-txn cache)]
+     (put! cache
+           wtxn
+           (name item)
+           result))
+   (LMDBCache. cache))
+  
   (evict
    [_ k]
-   (delete! cache k)
-   (PersistentCache. cache))
+   (with-txn [wtxn (write-txn cache)]
+     (delete! cache wtxn (name k)))
+   (LMDBCache. cache))
 
   (seed
    [_ base]
-   (PersistentCache. base)))
+   (LMDBCache. base)))
+
+(defn make-cache
+  "Args:
+   location: /path/to/location/to/persist/cache - should be a directory"
+  [location]
+
+  ;; first make the directory if it doesn't exist
+  (when-not (fs/exists? location)
+    (fs/mkdir location))
+
+  ;; set up the database
+  (LMDBCache.
+   (make-db location)))
