@@ -65,3 +65,9 @@
   ;; set up the database
   (LMDBCache.
    (make-db location)))
+
+(defn make-cache-from-db
+  "Args:
+   db: An existing lmdb instance"
+  [db]
+  (LMDBCache. db))
