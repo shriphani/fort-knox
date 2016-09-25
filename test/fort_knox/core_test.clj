@@ -1,6 +1,6 @@
 (ns fort-knox.core-test
   (:require [clojure.test :refer :all]
-            [fort-knox.core :refer :all]
+            [fort-knox.lmdb :as lmdb]
             [clojure.core.cache :as cache]
             [me.raynes.fs :as fs]))
 
@@ -8,7 +8,7 @@
   (testing "Start with an empty cache, add a bunch of things ^.^"
 
     (let [path (fs/temp-name "tmp-cache")
-          the-cache (make-cache path)]
+          the-cache (lmdb/make-cache path)]
       (is
        (not
         (cache/has? the-cache
