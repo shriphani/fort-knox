@@ -1,30 +1,37 @@
 (ns fort-knox.lmdb
   (:require [clojure.core.cache :refer :all]
             [clj-lmdb.simple :refer :all]
+            [clj-lmdb.core :as lmdb]
             [me.raynes.fs :as fs]))
+
+(defn cache->lmdb
+  [cache]
+  (let [cache* (into {} cache)]
+    (lmdb/->DB (:env cache*)
+               (:db cache*))))
 
 (defcache LMDBCache
   [cache]
   CacheProtocol
   (lookup
    [_ item]
-   (with-txn [rtxn (read-txn cache)]
-     (get! cache
+   (with-txn [rtxn (read-txn (cache->lmdb cache))]
+     (get! (cache->lmdb cache)
            rtxn
            (name item))))
 
   (lookup
    [_ item not-found]
-   (with-txn [rtxn (read-txn cache)]
-     (or (get! cache
+   (with-txn [rtxn (read-txn (cache->lmdb cache))]
+     (or (get! (cache->lmdb cache)
                rtxn
                (name item))
          not-found)))
 
   (has?
    [_ item]
-   (with-txn [rtxn (read-txn cache)]
-     (-> (get! cache
+   (with-txn [rtxn (read-txn (cache->lmdb cache))]
+     (-> (get! (cache->lmdb cache)
                rtxn
                (name item))
          nil?
@@ -36,8 +43,8 @@
 
   (miss
    [_ item result]
-   (with-txn [wtxn (write-txn cache)]
-     (put! cache
+   (with-txn [wtxn (write-txn (cache->lmdb cache))]
+     (put! (cache->lmdb cache)
            wtxn
            (name item)
            result))
@@ -45,8 +52,8 @@
   
   (evict
    [_ k]
-   (with-txn [wtxn (write-txn cache)]
-     (delete! cache wtxn (name k)))
+   (with-txn [wtxn (write-txn (cache->lmdb cache))]
+     (delete! (cache->lmdb cache) wtxn (name k)))
    (LMDBCache. cache))
 
   (seed

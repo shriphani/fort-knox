@@ -1,25 +1,43 @@
 (ns fort-knox.leveldb
-  (:require [clojure.core.cache :refer :all]
+  (:require [byte-streams]
+            [clojure.core.cache :refer :all]
             [clj-leveldb :as leveldb]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs])
+  (:import [clj_leveldb LevelDB]))
+
+(defn cache->leveldb
+  [cache]
+  (let [cache* (into {} cache)]
+    (leveldb/->LevelDB (:db cache*)
+                       (:key-decoder cache*)
+                       (:key-encoder cache*)
+                       (:val-decoder cache*)
+                       (:val-encoder cache*))))
+
+(defn fixed-to-string
+  [x]
+  (if-not (nil? x)
+    (byte-streams/to-string x)))
 
 (defcache LevelDBCache
   [cache]
   CacheProtocol
   (lookup
    [_ item]
-   (leveldb/get cache
-                (name item)))
+   (fixed-to-string
+    (leveldb/get (cache->leveldb cache)
+                 (name item))))
 
   (lookup
    [_ item not-found]
-   (or (leveldb/get cache
-                    (name item))
+   (or (fixed-to-string
+        (leveldb/get (cache->leveldb cache)
+                     (name item)))
        not-found))
 
   (has?
    [_ item]
-   (-> (leveldb/get cache
+   (-> (leveldb/get (cache->leveldb cache)
                     (name item))
        nil?
        not))
@@ -30,14 +48,15 @@
 
   (miss
    [_ item result]
-   (leveldb/put cache
+   (leveldb/put (cache->leveldb cache)
                 (name item)
                 result)
    (LevelDBCache. cache))
   
   (evict
    [_ k]
-   (leveldb/delete cache (name k))
+   (leveldb/delete (cache->leveldb cache)
+                   (name k))
    (LevelDBCache. cache))
 
   (seed
@@ -55,7 +74,9 @@
 
   ;; set up the database
   (LevelDBCache.
-   (leveldb/create-db location {})))
+   (leveldb/create-db
+    location
+    {})))
 
 (defn make-cache-from-db
   "Args:
