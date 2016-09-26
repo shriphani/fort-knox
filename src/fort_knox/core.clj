@@ -1,73 +1,60 @@
 (ns fort-knox.core
   (:require [clojure.core.cache :refer :all]
-            [clj-lmdb.simple :refer :all]
-            [me.raynes.fs :as fs]))
-
-(defcache LMDBCache
-  [cache]
-  CacheProtocol
-  (lookup
-   [_ item]
-   (with-txn [rtxn (read-txn cache)]
-     (get! cache
-           rtxn
-           (name item))))
-
-  (lookup
-   [_ item not-found]
-   (with-txn [rtxn (read-txn cache)]
-     (or (get! cache
-               rtxn
-               (name item))
-         not-found)))
-
-  (has?
-   [_ item]
-   (with-txn [rtxn (read-txn cache)]
-     (-> (get! cache
-               rtxn
-               (name item))
-         nil?
-         not)))
-
-  (hit
-   [cache item]
-   cache)
-
-  (miss
-   [_ item result]
-   (with-txn [wtxn (write-txn cache)]
-     (put! cache
-           wtxn
-           (name item)
-           result))
-   (LMDBCache. cache))
-  
-  (evict
-   [_ k]
-   (with-txn [wtxn (write-txn cache)]
-     (delete! cache wtxn (name k)))
-   (LMDBCache. cache))
-
-  (seed
-   [_ base]
-   (LMDBCache. base)))
+            [me.raynes.fs :as fs]
+            [fort-knox.leveldb :as leveldb]
+            [fort-knox.lmdb :as lmdb])
+  (:import [fort_knox.leveldb LevelDBCache]
+           [fort_knox.lmdb LMDBCache]
+           [java.lang UnsupportedOperationException]))
 
 (defn make-cache
   "Args:
    location: /path/to/location/to/persist/cache - should be a directory"
-  [location]
+  ([location]
+   (make-cache location :type :leveldb))
 
-  ;; first make the directory if it doesn't exist
-  (when-not (fs/exists? location)
-    (fs/mkdir location))
+  ([location & options]
+   ;; first make the directory if it doesn't exist
+   (let [options-dict (into {}
+                            [(into []
+                                   options)])]
+     
+     (when-not (fs/exists? location)
+       (fs/mkdir location))
+     
+     ;; set up the database
+     (cond (-> options-dict
+               :type
+               (= :leveldb))
+           (LevelDBCache.
+            (leveldb/make-cache location))
 
-  ;; set up the database
-  (LMDBCache.
-   (make-db location)))
+           (-> options-dict
+               :type
+               (= :lmdb))
+           (LMDBCache.
+            (lmdb/make-cache location))
+
+           :else
+           (UnsupportedOperationException. "This DB is not supported (yet).")))))
 
 (defn make-cache-from-db
   "Args:
    db: An existing lmdb instance"
-  [db]
-  (LMDBCache. db))
+  [db & options]
+  (let [options-dict (->> options
+                          (into [])
+                          vector
+                          (into {}))]
+    (cond (-> options-dict
+              :type
+              (= :lmdb))
+          (LMDBCache. db)
+
+          (-> options-dict
+              :type
+              (= :leveldb))
+          (LevelDBCache. db)
+
+          :else
+          (UnsupportedOperationException. "This DB is not supported (yet)."))))

@@ -5,5 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.cache "0.6.5"]
+                 [byte-streams "0.2.2"]
                  [clj-lmdb "0.2.4"]
+                 [factual/clj-leveldb "0.1.1"]
                  [me.raynes/fs "1.4.6"]])
