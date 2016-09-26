@@ -29,9 +29,9 @@
            (LevelDBCache.
             (leveldb/make-cache location))
 
-           (= options-dict
-              :type
-              (= :lmdb))
+           (-> options-dict
+               :type
+               (= :lmdb))
            (LMDBCache.
             (lmdb/make-cache location))
 
