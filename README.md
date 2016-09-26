@@ -1,7 +1,8 @@
 # fort-knox
 
 An implementation of `core.cache` that saves entries to disk.
-This implementation uses the fantastic LMDB.
+
+You get a chance to use LevelDB (default) or LMDB.
 
 [![Circle CI](https://circleci.com/gh/shriphani/fort-knox.svg?style=shield&circle-token=d6290287207f1a753a288eb4363c9ce8a1d0f3d9)](https://circleci.com/gh/shriphani/fort-knox)
 
@@ -23,14 +24,21 @@ user> (use 'fort-knox.core :reload-all)
 nil
 ```
 
-Create a cache:
+Create a cache (LevelDB by default):
 
 ```clojure
 user> (def cache (make-cache "/tmp"))
 #'user/cache
 ```
 
-Everything else is from `core.cache`:
+If you want to use LMDB:
+
+```clojure
+user> (def cache (make-cache "/tmp" :type :lmdb))
+#'user/cache
+```
+
+Everything else is from `core.cache`. For example:
 
 ```clojure
 user> (cache/has? cache "foo")
