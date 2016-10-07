@@ -2,17 +2,24 @@
   (:require [byte-streams]
             [clojure.core.cache :refer :all]
             [clj-leveldb :as leveldb]
+            [clj-named-leveldb.core :as named-leveldb]
             [me.raynes.fs :as fs])
   (:import [clj_leveldb LevelDB]))
 
 (defn cache->leveldb
-  [cache]
-  (let [cache* (into {} cache)]
-    (leveldb/->LevelDB (:db cache*)
-                       (:key-decoder cache*)
-                       (:key-encoder cache*)
-                       (:val-decoder cache*)
-                       (:val-encoder cache*))))
+  ([cache]
+   (cache->leveldb cache
+                   ""))
+
+  ([cache name]
+   (let [cache* (into {} cache)
+
+         db     (leveldb/->LevelDB (:db cache*)
+                                   (:key-decoder cache*)
+                                   (:key-encoder cache*)
+                                   (:val-decoder cache*)
+                                   (:val-encoder cache*))]
+     (named-leveldb/make-named-db db name))))
 
 (defn fixed-to-string
   [x]
@@ -25,20 +32,20 @@
   (lookup
    [_ item]
    (fixed-to-string
-    (leveldb/get (cache->leveldb cache)
-                 (name item))))
+    (named-leveldb/get (cache->leveldb cache)
+                       (name item))))
 
   (lookup
    [_ item not-found]
    (or (fixed-to-string
-        (leveldb/get (cache->leveldb cache)
-                     (name item)))
+        (named-leveldb/get (cache->leveldb cache)
+                           (name item)))
        not-found))
 
   (has?
    [_ item]
-   (-> (leveldb/get (cache->leveldb cache)
-                    (name item))
+   (-> (named-leveldb/get (cache->leveldb cache)
+                          (name item))
        nil?
        not))
 
@@ -48,15 +55,15 @@
 
   (miss
    [_ item result]
-   (leveldb/put (cache->leveldb cache)
-                (name item)
-                result)
+   (named-leveldb/put (cache->leveldb cache)
+                      (name item)
+                      result)
    (LevelDBCache. cache))
   
   (evict
    [_ k]
-   (leveldb/delete (cache->leveldb cache)
-                   (name k))
+   (named-leveldb/delete (cache->leveldb cache)
+                         (name k))
    (LevelDBCache. cache))
 
   (seed
