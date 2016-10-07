@@ -1,4 +1,4 @@
-(defproject fort-knox "0.3.0"
+(defproject fort-knox "0.4.0"
   :description "A disk-backed core.cache implementation based on LMDB"
   :url "https://github.com/shriphani/fort-knox"
   :license {:name "Eclipse Public License"
