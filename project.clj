@@ -8,4 +8,5 @@
                  [byte-streams "0.2.2"]
                  [clj-lmdb "0.2.4"]
                  [factual/clj-leveldb "0.1.1"]
+                 [clj-named-leveldb "0.1.0"]
                  [me.raynes/fs "1.4.6"]])
