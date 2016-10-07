@@ -7,19 +7,18 @@
   (:import [clj_leveldb LevelDB]))
 
 (defn cache->leveldb
-  ([cache]
-   (cache->leveldb cache
-                   ""))
+  [cache]
+  (let [cache* (into {} cache)
 
-  ([cache name]
-   (let [cache* (into {} cache)
-
-         db     (leveldb/->LevelDB (:db cache*)
-                                   (:key-decoder cache*)
-                                   (:key-encoder cache*)
-                                   (:val-decoder cache*)
-                                   (:val-encoder cache*))]
-     (named-leveldb/make-named-db db name))))
+        db*    (:db cache*)
+        name*  (:name cache*)
+        
+        db     (leveldb/->LevelDB (:db db*)
+                                  (:key-decoder db*)
+                                  (:key-encoder db*)
+                                  (:val-decoder db*)
+                                  (:val-encoder db*))]
+    (named-leveldb/make-named-db db name*)))
 
 (defn fixed-to-string
   [x]
@@ -73,17 +72,24 @@
 (defn make-cache
   "Args:
    location: /path/to/location/to/persist/cache - should be a directory"
-  [location]
+  ([location]
+   (make-cache location
+               ""))
 
-  ;; first make the directory if it doesn't exist
-  (when-not (fs/exists? location)
-    (fs/mkdir location))
+  ([location name]
 
-  ;; set up the database
-  (LevelDBCache.
-   (leveldb/create-db
-    location
-    {})))
+   ;; first make the directory if it doesn't exist
+   (when-not (fs/exists? location)
+     (fs/mkdir location))
+
+   ;; set up the database
+   (let [db (leveldb/create-db
+              location
+              {})
+
+         named-db (named-leveldb/make-named-db db
+                                               name)]
+     (LevelDBCache. named-db))))
 
 (defn make-cache-from-db
   "Args:
